@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import from the Standard Library
-from httplib import HTTPConnection
 from sys import exit
 
 # Import from itools

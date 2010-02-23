@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import from the Standard Library
+from httplib import HTTPConnection
 from os.path import expanduser
 
 # Import from itools
