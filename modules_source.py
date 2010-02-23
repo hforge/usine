@@ -61,7 +61,7 @@ class source(module):
 
     def get_url(self):
         mirror = self.options['mirror']
-        mirror = conf.get_section('mirror', mirror)
+        mirror = config.get_section('mirror', mirror)
         mirror = mirror.options['url']
         return '%s%s.git' % (mirror, self.name)
 
