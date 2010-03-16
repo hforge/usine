@@ -242,7 +242,7 @@ class ins_ikaaro(instance):
         path = self.options['path']
         host = self.get_host()
         cmd = cmd_vhosts % path
-        host.run('./bin/python -c "%s"' % cmd, silent=True)
+        host.run('./bin/python -c "%s"' % cmd, quiet=True)
 
 
     start_title = u'Start an ikaaro instance'

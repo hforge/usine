@@ -102,13 +102,13 @@ class RemoteHost(object):
             self.ssh = None
 
 
-    def run(self, command, cwd=None, silent=False):
+    def run(self, command, cwd=None, quiet=False):
         # Change dir
         if cwd:
             self.chdir(cwd)
 
         # Print
-        if silent is False:
+        if quiet is False:
             print '%s@%s %s $ %s' % (self.user, self.host, self.cwd, command)
         command = 'cd %s && %s' % (self.cwd, command)
 
