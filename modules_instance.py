@@ -21,7 +21,7 @@ from os.path import expanduser
 
 # Import from itools
 from itools.core import freeze
-from itools import vfs
+from itools.fs import lfs
 
 # Import from usine
 from config import config
@@ -79,8 +79,8 @@ class ins_python(instance):
         """Make a source distribution for every required Python package.
         """
         path = expanduser('~/.usine/cache')
-        if not vfs.exists(path):
-            vfs.make_folder(path)
+        if not lfs.exists(path):
+            lfs.make_folder(path)
 
         print '**********************************************************'
         print ' BUILD'

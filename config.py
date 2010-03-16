@@ -21,7 +21,7 @@ from os.path import expanduser
 from sys import stdin
 
 # Import from itools
-from itools import vfs
+from itools.fs import lfs
 
 # Import from usine
 from modules import modules
@@ -37,18 +37,18 @@ class configuration(object):
 
     def load(self):
         path = expanduser('~/.usine')
-        if vfs.is_file(path):
+        if lfs.is_file(path):
             return 'ERROR: %s is a file, remove it first' % path
 
         # Make the user configuration file if needed
-        if not vfs.exists(path):
+        if not lfs.exists(path):
             print 'Making the configuration folder:', path
-            vfs.make_folder(path)
+            lfs.make_folder(path)
             return 'Now add the INI files within the folder'
 
         # Read the user configuration file
         ini  = [ '%s/%s' % (path, x)
-                 for x in vfs.get_names(path) if x[-4:] == '.ini' ]
+                 for x in lfs.get_names(path) if x[-4:] == '.ini' ]
         if len(ini) == 0:
             return 'ERROR: zero INI files found in %s/' % path
 

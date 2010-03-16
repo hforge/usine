@@ -20,7 +20,8 @@ from sys import prefix
 from os.path import expanduser
 
 # Import from itools
-from itools import pkg, vfs
+from itools import pkg
+from itools.fs import lfs
 
 # Import from usine
 from config import config
@@ -83,7 +84,7 @@ class source(module):
     def action_sync(self):
         # Case 1: Fetch
         folder = self.get_path()
-        if vfs.exists(folder):
+        if lfs.exists(folder):
             local.run('git fetch origin', cwd=folder)
             return
 
@@ -164,7 +165,7 @@ class src_sphinx(source):
     def make_figures(self, format):
         cwd = self.get_path()
         local.chdir(cwd)
-        folder = vfs.open(cwd)
+        folder = lfs.open(cwd)
         for name in folder.get_names():
             if not folder.exists('%s/figures-src' % name):
                 continue
