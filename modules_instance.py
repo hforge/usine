@@ -29,6 +29,18 @@ from hosts import local, get_remote_host
 from modules import module, register_module
 
 
+
+cmd_vhosts = """
+from itools.xapian import Catalog
+from ikaaro.registry import get_register_fields
+catalog = Catalog('./%s/catalog', get_register_fields(), read_only=True)
+vhosts = list(catalog.get_unique_values('vhosts'))
+vhosts.sort()
+for vhost in vhosts:
+    print vhost
+"""
+
+
 class instance(module):
 
     def get_host(self):
@@ -56,7 +68,7 @@ class ins_python(instance):
         server = self.options['server']
         if server == 'localhost':
             return ['build', 'install', 'restart', 'deploy']
-        return ['build', 'upload', 'install', 'restart', 'deploy', 'test']
+        return ['build', 'upload', 'install', 'restart', 'deploy', 'test', 'vhosts']
 
 
     def get_action(self, name):
@@ -186,11 +198,22 @@ class ins_python(instance):
                 print res.status, res.reason, '=>', uri
 
 
+    vhosts_title = (
+        u'List vhosts of all ikaaro instances of this Python environment')
+    def action_vhosts(self):
+        """List vhosts of all ikaaro instances of this Python environment"""
+        print '**********************************************************'
+        print ' LIST VHOSTS'
+        print '**********************************************************'
+        for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
+            if ins_ikaaro.options['ins_python'] == self.name:
+                ins_ikaaro.vhosts()
+
 
 class ins_ikaaro(instance):
 
     class_title = u'Manage Ikaaro instances'
-    class_actions = freeze(['start', 'stop', 'restart'])
+    class_actions = freeze(['start', 'stop', 'restart', 'vhosts'])
 
 
     def get_host(self):
@@ -213,6 +236,13 @@ class ins_ikaaro(instance):
         cmd = './bin/icms-start.py -d %s' % self.options['path']
         host = self.get_host()
         host.run(cmd)
+
+
+    def vhosts(self):
+        path = self.options['path']
+        host = self.get_host()
+        cmd = cmd_vhosts % path
+        host.run('./bin/python -c "%s"' % cmd, silent=True)
 
 
     start_title = u'Start an ikaaro instance'
@@ -238,6 +268,14 @@ class ins_ikaaro(instance):
         print '**********************************************************'
         self.stop()
         self.start()
+
+
+    vhosts_title = u'List vhosts of ikaaro instance'
+    def action_vhosts(self):
+        print '**********************************************************'
+        print ' List Vhosts'
+        print '**********************************************************'
+        self.vhosts()
 
 
 
