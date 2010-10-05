@@ -16,12 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import from the Standard Library
-from httplib import HTTPConnection
 from os.path import expanduser
+
+# Import from pygobject
+from glib import GError
 
 # Import from itools
 from itools.core import freeze
-from itools.fs import lfs
+from itools.fs import lfs, vfs
 
 # Import from usine
 from config import config
@@ -192,10 +194,12 @@ class ins_python(instance):
         for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
             if ins_ikaaro.options['ins_python'] == self.name:
                 uri = ins_ikaaro.options['uri']
-                conn = HTTPConnection(uri)
-                conn.request("HEAD", "/")
-                res = conn.getresponse()
-                print res.status, res.reason, '=>', uri
+                try:
+                    conn = vfs.open('%s/;_ctrl' % uri)
+                except GError:
+                    print '[ERROR] ', uri
+                else:
+                    print '[OK]', uri
 
 
     vhosts_title = (
