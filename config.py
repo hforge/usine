@@ -18,7 +18,6 @@
 # Import from the Standard Library
 from ConfigParser import RawConfigParser
 from os.path import expanduser
-from sys import stdin
 
 # Import from itools
 from itools.fs import lfs

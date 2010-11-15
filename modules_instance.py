@@ -195,7 +195,7 @@ class ins_python(instance):
             if ins_ikaaro.options['ins_python'] == self.name:
                 uri = ins_ikaaro.options['uri']
                 try:
-                    conn = vfs.open('%s/;_ctrl' % uri)
+                    vfs.open('%s/;_ctrl' % uri)
                 except GError:
                     print '[ERROR] ', uri
                 else:
