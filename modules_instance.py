@@ -113,13 +113,12 @@ class ins_python(instance):
         print '**********************************************************'
         print ' UPLOAD'
         print '**********************************************************'
-        r_path = '%s/Packages' % self.options['path']
         for name, branch in self.get_packages():
             source = config.get_section('src_itools', name)
             # Upload
             pkgname = source.get_pkgname()
             l_path = '%s/dist/%s.tar.gz' % (source.get_path(), pkgname)
-            host.put(l_path, r_path)
+            host.put(l_path, '/tmp')
 
 
     install_title = u'Install the source code into the Python environment'
@@ -131,18 +130,17 @@ class ins_python(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        r_path = self.options['path']
+        py_path = '%s/bin/python' % self.options['path']
         for name, branch in self.get_packages():
             source = config.get_section('src_itools', name)
             pkgname = source.get_pkgname()
             # Untar
-            cwd = '%s/Packages' % r_path
-            cmd = 'tar xzf %s.tar.gz' % pkgname
-            host.run(cmd, cwd)
+            host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
+            pkg_path = '/tmp/%s' % pkgname
             # Install
-            cwd = '%s/Packages/%s' % (r_path, pkgname)
-            cmd = '%s/bin/python setup.py --quiet install' % r_path
-            host.run(cmd, cwd)
+            host.run('%s setup.py --quiet install' % py_path, pkg_path)
+            # Clean
+            host.run('rm -rf %s' % pkg_path, '/tmp')
 
 
     def action_install_local(self):
