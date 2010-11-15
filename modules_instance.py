@@ -283,48 +283,6 @@ class ins_ikaaro(instance):
 
 
 
-class ins_sphinx(instance):
-
-    def get_actions(self):
-        if config.options.offline:
-            return ['checkout', 'html', 'pdf', 'build', 'dist']
-        return ['dist', 'deploy']
-
-
-    upload_title = u'Upload the tarball to the remote server'
-    def action_upload(self):
-        cwd = '%s/.build' % self.get_path()
-        pkgname = self.get_pkgname()
-        # Upload
-        l_path = '%s/%s.tar.gz' % (cwd, pkgname)
-        r_path = '%s/Packages' % self.options['path']
-        host = self.get_host()
-        host.put(l_path, r_path)
-
-
-    install_title = u'Install the documentation'
-    def action_install(self):
-        pkgname = self.get_pkgname()
-
-        # Unpack tarball
-        r_path = self.options['path']
-        cwd = '%s/Packages' % r_path
-        cmd = 'tar xpf %s.tar.gz' % pkgname
-        host = self.get_host()
-        host.run(cmd, cwd=cwd)
-        # Make symbolic link
-        cmd = 'ln -sf %s/Packages/%s htdocs' % (r_path, pkgname)
-        host.run(cmd, cwd=r_path)
-
-
-    deploy_title = 'All of above and deploy on remote host'
-    def action_deploy(self):
-        self.action_dist()
-        self.action_upload()
-        self.action_install()
-
-
 # Register
 register_module('ins_ikaaro', ins_ikaaro)
 register_module('ins_python', ins_python)
-register_module('ins_sphinx', ins_sphinx)
