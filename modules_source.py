@@ -129,6 +129,23 @@ class src_itools(source):
 
 
 
+class src_python(source):
+
+    class_title = u'Manage python packages'
+
+    def get_version(self):
+        cwd = self.get_path()
+        local.chdir(cwd)
+        out = local.run(['%s/python' % bin, 'setup.py', '--version'])
+        return out.splitlines()[-1].strip()
+
+
+    def action_build(self):
+        cwd = self.get_path()
+        local.chdir(cwd)
+        local.run(['%s/python' % bin, 'setup.py', '--quiet', 'sdist'])
+
+
 
 sphinx = (
     'sphinx-build -b {mode} -d .build/doctrees -D latex_paper_size=a4 . '
@@ -229,4 +246,5 @@ class src_sphinx(source):
 
 # Register
 register_module('src_itools', src_itools)
+register_module('src_python', src_python)
 register_module('src_sphinx', src_sphinx)

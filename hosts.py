@@ -61,7 +61,7 @@ class LocalHost(object):
         # Print
         print '%s $ %s' % (self.cwd, command_str)
         # Call
-        get_pipe(command, cwd=self.cwd)
+        return get_pipe(command, cwd=self.cwd)
 
 
     def put(self, source, target):

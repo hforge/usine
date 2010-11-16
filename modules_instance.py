@@ -60,6 +60,20 @@ class instance(module):
         return get_remote_host(host, user)
 
 
+    def get_source(self, name):
+        # Try src_python ?
+        source = config.get_section('src_python', name)
+        if source is not None:
+            return source
+
+        # Try src_itools ?
+        source = config.get_section('src_itools', name)
+        if source is not None:
+            return source
+
+        raise ValueError, 'the source "%s" is not found' % name
+
+
 
 class ins_python(instance):
 
@@ -70,7 +84,8 @@ class ins_python(instance):
         server = self.options['server']
         if server == 'localhost':
             return ['build', 'install', 'restart', 'deploy']
-        return ['build', 'upload', 'install', 'restart', 'deploy', 'test', 'vhosts']
+        return ['build', 'upload', 'install', 'restart', 'deploy', 'test',
+                'vhosts']
 
 
     def get_action(self, name):
@@ -88,7 +103,7 @@ class ins_python(instance):
         return [ x.split(':') for x in packages ]
 
 
-    build_title = u'Build the source code this Python environement requires'
+    build_title = u'Build the source code this Python environment requires'
     def action_build(self):
         """Make a source distribution for every required Python package.
         """
@@ -101,7 +116,7 @@ class ins_python(instance):
         print '**********************************************************'
         for name, branch in self.get_packages():
             config.options.branch = branch
-            source = config.get_section('src_itools', name)
+            source = self.get_source(name)
             source.action_dist()
 
 
@@ -114,7 +129,7 @@ class ins_python(instance):
         print ' UPLOAD'
         print '**********************************************************'
         for name, branch in self.get_packages():
-            source = config.get_section('src_itools', name)
+            source = self.get_source(name)
             # Upload
             pkgname = source.get_pkgname()
             l_path = '%s/dist/%s.tar.gz' % (source.get_path(), pkgname)
@@ -132,7 +147,7 @@ class ins_python(instance):
         print '**********************************************************'
         py_path = '%s/bin/python' % self.options['path']
         for name, branch in self.get_packages():
-            source = config.get_section('src_itools', name)
+            source = self.get_source(name)
             pkgname = source.get_pkgname()
             # Untar
             host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
@@ -151,7 +166,7 @@ class ins_python(instance):
         path = expanduser(path)
         command = ['%s/bin/python' % path, 'setup.py', 'install']
         for name, branch in self.get_packages():
-            source = config.get_section('src_itools', name)
+            source = self.get_source(name)
             cwd = source.get_path()
             local.run(command, cwd=cwd)
 
