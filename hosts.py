@@ -93,7 +93,7 @@ class RemoteHost(object):
             ssh.set_missing_host_key_policy(AutoAddPolicy())
             ssh.connect(self.host, self.port, self.user)
             self.ssh = ssh
-        return self.ssh._transport
+        return self.ssh.get_transport()
 
 
     def close(self):
@@ -142,6 +142,13 @@ class RemoteHost(object):
             statinfo = ftp.stat(target)
             if S_ISDIR(statinfo.st_mode):
                 target = '%s/%s' % (target, basename(source))
+            try:
+                statinfo = ftp.stat(target)
+            except IOError:
+                pass
+            else:
+                print '  Already uploaded, skipping.'
+                return
             ftp.put(source, target)
 
 
