@@ -135,7 +135,6 @@ class RemoteHost(object):
 
 
     def put(self, source, target):
-        print 'PUT %s -> %s@%s:%s' % (source, self.user, self.host, target)
         ftp = self.transport.open_sftp_client()
         with closing(ftp) as ftp:
             target = target.replace('~', ftp.normalize('.'))
@@ -145,11 +144,12 @@ class RemoteHost(object):
             try:
                 statinfo = ftp.stat(target)
             except IOError:
-                pass
+                msg = 'PUT %s -> %s@%s:%s'
+                print msg % (source, self.user, self.host, target)
+                ftp.put(source, target)
             else:
-                print '  Already uploaded, skipping.'
-                return
-            ftp.put(source, target)
+                filename = basename(source)
+                print '[INFO] %s already uploaded, skipping.' % filename
 
 
 # Singleton
