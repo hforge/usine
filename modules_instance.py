@@ -230,7 +230,7 @@ class ins_python(instance):
 class ins_ikaaro(instance):
 
     class_title = u'Manage Ikaaro instances'
-    class_actions = freeze(['start', 'stop', 'restart', 'vhosts'])
+    class_actions = freeze(['start', 'stop', 'restart', 'reindex', 'vhosts'])
 
 
     def get_host(self):
@@ -249,8 +249,17 @@ class ins_ikaaro(instance):
         host.run('./bin/icms-stop.py --force %s' % path)
 
 
-    def start(self):
-        cmd = './bin/icms-start.py -d %s' % self.options['path']
+    def start(self, readonly=False):
+        cmd = ' '.join([
+            './bin/icms-start.py',
+            '-r' if readonly else '',
+            '-d', self.options['path']])
+        host = self.get_host()
+        host.run(cmd)
+
+
+    def update_catalog(self):
+        cmd = './bin/icms-update-catalog.py -y %s' % self.options['path']
         host = self.get_host()
         host.run(cmd)
 
@@ -283,6 +292,18 @@ class ins_ikaaro(instance):
         print '**********************************************************'
         print ' RESTART'
         print '**********************************************************'
+        self.stop()
+        self.start()
+
+
+    reindex_title = u'Update catalog of an ikaaro instance'
+    def action_reindex(self):
+        print '**********************************************************'
+        print ' REINDEX'
+        print '**********************************************************'
+        self.stop()
+        self.start(readonly=True)
+        self.update_catalog()
         self.stop()
         self.start()
 
