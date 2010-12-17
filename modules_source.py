@@ -79,7 +79,7 @@ class pysrc(module):
             local.run(['git', 'branch', branch, 'origin/%s' % branch])
             local.run(['git', 'checkout', branch])
         else:
-            local.run(['git', 'rebase', 'origin/%s' % branch])
+            local.run(['git', 'reset', '--hard', 'origin/%s' % branch])
         local.run('git clean -fxdq')
 
 
