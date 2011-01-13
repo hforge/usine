@@ -51,7 +51,10 @@ class source(module):
 
 
     def get_pkgname(self):
-        version = self.get_version()
+        cwd = self.get_path()
+        local.chdir(cwd)
+        version = local.run(['%s/python' % bin, 'setup.py', '--version'])
+        version = version.splitlines()[-1].strip()
         return '%s-%s' % (self.name.split('/')[0], version)
 
 
@@ -116,11 +119,6 @@ class src_itools(source):
 
     class_title = u'Manage itools packages'
 
-    def get_version(self):
-        version = '%s/version.txt' % self.get_path()
-        return open(version).read()
-
-
     def action_build(self):
         cwd = self.get_path()
         local.chdir(cwd)
@@ -132,13 +130,6 @@ class src_itools(source):
 class src_python(source):
 
     class_title = u'Manage python packages'
-
-    def get_version(self):
-        cwd = self.get_path()
-        local.chdir(cwd)
-        out = local.run(['%s/python' % bin, 'setup.py', '--version'])
-        return out.splitlines()[-1].strip()
-
 
     def action_build(self):
         cwd = self.get_path()
