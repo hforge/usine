@@ -75,7 +75,7 @@ class instance(module):
 
 
 
-class ins_python(instance):
+class pyenv(instance):
 
     class_title = u'Manage Python environments'
 
@@ -95,7 +95,7 @@ class ins_python(instance):
                 return self.action_install_local
             elif name == 'upload':
                 return None
-        return super(ins_python, self).get_action(name)
+        return super(pyenv, self).get_action(name)
 
 
     def get_packages(self):
@@ -179,7 +179,7 @@ class ins_python(instance):
         print ' RESTART'
         print '**********************************************************'
         for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['ins_python'] == self.name:
+            if ins_ikaaro.options['pyenv'] == self.name:
                 ins_ikaaro.stop()
                 ins_ikaaro.start()
 
@@ -205,7 +205,7 @@ class ins_python(instance):
         print ' TEST'
         print '**********************************************************'
         for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['ins_python'] == self.name:
+            if ins_ikaaro.options['pyenv'] == self.name:
                 uri = ins_ikaaro.options['uri']
                 try:
                     vfs.open('%s/;_ctrl' % uri)
@@ -223,7 +223,7 @@ class ins_python(instance):
         print ' LIST VHOSTS'
         print '**********************************************************'
         for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['ins_python'] == self.name:
+            if ins_ikaaro.options['pyenv'] == self.name:
                 ins_ikaaro.vhosts()
 
 
@@ -234,10 +234,10 @@ class ins_ikaaro(instance):
 
 
     def get_host(self):
-        ins_python = self.options['ins_python']
-        ins_python = config.get_section('ins_python', ins_python)
-        host = ins_python.get_host()
-        cwd = ins_python.options['path']
+        pyenv = self.options['pyenv']
+        pyenv = config.get_section('pyenv', pyenv)
+        host = pyenv.get_host()
+        cwd = pyenv.options['path']
         host.chdir(cwd)
         return host
 
@@ -319,4 +319,4 @@ class ins_ikaaro(instance):
 
 # Register
 register_module('ins_ikaaro', ins_ikaaro)
-register_module('ins_python', ins_python)
+register_module('pyenv', pyenv)
