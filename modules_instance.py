@@ -172,10 +172,10 @@ class pyenv(instance):
         print '**********************************************************'
         print ' RESTART'
         print '**********************************************************'
-        for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['pyenv'] == self.name:
-                ins_ikaaro.stop()
-                ins_ikaaro.start()
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                ikaaro.stop()
+                ikaaro.start()
 
 
     deploy_title = u'All of the above'
@@ -198,9 +198,9 @@ class pyenv(instance):
         print '**********************************************************'
         print ' TEST'
         print '**********************************************************'
-        for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['pyenv'] == self.name:
-                uri = ins_ikaaro.options['uri']
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                uri = ikaaro.options['uri']
                 try:
                     vfs.open('%s/;_ctrl' % uri)
                 except GError:
@@ -216,12 +216,12 @@ class pyenv(instance):
         print '**********************************************************'
         print ' LIST VHOSTS'
         print '**********************************************************'
-        for ins_ikaaro in config.get_sections_by_type('ins_ikaaro'):
-            if ins_ikaaro.options['pyenv'] == self.name:
-                ins_ikaaro.vhosts()
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                ikaaro.vhosts()
 
 
-class ins_ikaaro(instance):
+class ikaaro(instance):
 
     class_title = u'Manage Ikaaro instances'
     class_actions = freeze(['start', 'stop', 'restart', 'reindex', 'vhosts'])
@@ -312,5 +312,5 @@ class ins_ikaaro(instance):
 
 
 # Register
-register_module('ins_ikaaro', ins_ikaaro)
+register_module('ikaaro', ikaaro)
 register_module('pyenv', pyenv)
