@@ -33,9 +33,9 @@ bin = '%s/bin' % prefix
 
 
 
-class source(module):
+class pysrc(module):
 
-    class_title = u'Manage source code'
+    class_title = u'Manage Python packages'
 
 
     def get_actions(self):
@@ -47,7 +47,7 @@ class source(module):
     def get_action(self, name):
         if config.options.offline and name == 'sync':
             return None
-        return super(source, self).get_action(name)
+        return super(pysrc, self).get_action(name)
 
 
     def get_pkgname(self):
@@ -102,7 +102,12 @@ class source(module):
 
     build_title = u'[private] Build'
     def action_build(self):
-        raise NotImplementedError
+        cwd = self.get_path()
+        local.chdir(cwd)
+        # itools package: build
+        if lfs.exists('%s/setup.conf' % cwd):
+            local.run(['%s/ipkg-build.py' % bin])
+        local.run(['%s/python' % bin, 'setup.py', '--quiet', 'sdist'])
 
 
     dist_title = u'All of the above'
@@ -114,30 +119,5 @@ class source(module):
                 action()
 
 
-
-class src_itools(source):
-
-    class_title = u'Manage itools packages'
-
-    def action_build(self):
-        cwd = self.get_path()
-        local.chdir(cwd)
-        local.run(['%s/ipkg-build.py' % bin])
-        local.run(['%s/python' % bin, 'setup.py', '--quiet', 'sdist'])
-
-
-
-class src_python(source):
-
-    class_title = u'Manage python packages'
-
-    def action_build(self):
-        cwd = self.get_path()
-        local.chdir(cwd)
-        local.run(['%s/python' % bin, 'setup.py', '--quiet', 'sdist'])
-
-
-
 # Register
-register_module('src_itools', src_itools)
-register_module('src_python', src_python)
+register_module('pysrc', pysrc)

@@ -61,14 +61,8 @@ class instance(module):
 
 
     def get_source(self, name):
-        # Try src_python ?
-        source = config.get_section('src_python', name)
-        if source is not None:
-            return source
-
-        # Try src_itools ?
-        source = config.get_section('src_itools', name)
-        if source is not None:
+        source = config.get_section('pysrc', name)
+        if source:
             return source
 
         raise ValueError, 'the source "%s" is not found' % name
