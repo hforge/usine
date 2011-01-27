@@ -22,7 +22,7 @@ from os.path import expanduser
 from glib import GError
 
 # Import from itools
-from itools.core import freeze
+from itools.core import freeze, lazy
 from itools.fs import lfs, vfs
 
 # Import from usine
@@ -45,8 +45,23 @@ for vhost in vhosts:
 
 class instance(module):
 
+    @lazy
+    def location(self):
+        location = self.options['location']
+        if location[:10] == 'localhost:':
+            # Case 1: local
+            user, server, path = None, 'localhost', location[10:]
+        else:
+            # Case 2: remote
+            user, location = location.split('@', 1)
+            server, path = location.split(':', 1)
+        if path[0] != '/':
+            path = '~/%s' % path
+        return user, server, path
+
+
     def get_host(self):
-        server = self.options['server']
+        user, server, path = self.location
         if server == 'localhost':
             return local
 
@@ -56,7 +71,6 @@ class instance(module):
 
         server = config.get_section('server', server)
         host = server.options['host']
-        user = self.options['user']
         return get_remote_host(host, user)
 
 
@@ -75,16 +89,14 @@ class pyenv(instance):
 
 
     def get_actions(self):
-        server = self.options['server']
-        if server == 'localhost':
+        if self.location[1] == 'localhost':
             return ['build', 'install', 'restart', 'deploy']
         return ['build', 'upload', 'install', 'restart', 'deploy', 'test',
                 'vhosts']
 
 
     def get_action(self, name):
-        server = self.options['server']
-        if server == 'localhost':
+        if self.location[1] == 'localhost':
             if name == 'install':
                 return self.action_install_local
             elif name == 'upload':
@@ -139,7 +151,7 @@ class pyenv(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        py_path = '%s/bin/python' % self.options['path']
+        py_path = '%s/bin/python' % self.location[2]
         for name, branch in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
@@ -156,8 +168,7 @@ class pyenv(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        path = self.options['path']
-        path = expanduser(path)
+        path = expanduser(self.location[2])
         command = ['%s/bin/python' % path, 'setup.py', 'install']
         for name, branch in self.get_packages():
             source = self.get_source(name)
@@ -221,6 +232,7 @@ class pyenv(instance):
                 ikaaro.vhosts()
 
 
+
 class ikaaro(instance):
 
     class_title = u'Manage Ikaaro instances'
@@ -231,7 +243,7 @@ class ikaaro(instance):
         pyenv = self.options['pyenv']
         pyenv = config.get_section('pyenv', pyenv)
         host = pyenv.get_host()
-        cwd = pyenv.options['path']
+        cwd = pyenv.location[2]
         host.chdir(cwd)
         return host
 
