@@ -76,8 +76,7 @@ class pysrc(module):
         try:
             local.run(['git', 'checkout', branch])
         except EnvironmentError:
-            local.run(['git', 'branch', branch, 'origin/%s' % branch])
-            local.run(['git', 'checkout', branch])
+            local.run(['git', 'checkout', '-b', branch, 'origin/%s' % branch])
         else:
             local.run(['git', 'reset', '--hard', 'origin/%s' % branch])
         local.run('git clean -fxdq')
