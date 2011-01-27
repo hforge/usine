@@ -1,0 +1,75 @@
+# usine completion
+
+have usine.py &&
+{
+
+_usine_modules()
+{
+    COMPREPLY=( "${COMPREPLY[@]}" $( compgen -W \
+        "$( usine.py | \
+        sed -ne 's/  \([a-z0-9/_.]*\).*/\1/p' )" \
+        -- "$cur" ) )
+}
+
+_usine_items()
+{
+    COMPREPLY=( "${COMPREPLY[@]}" $( compgen -W \
+        "$( usine.py $1 | \
+        sed -ne 's/  \([a-z0-9/_.]*\).*/\1/p' )" \
+        -- "$cur" ) )
+}
+
+_usine_actions()
+{
+    COMPREPLY=( "${COMPREPLY[@]}" $( compgen -W \
+        "$( usine.py $1 $2 | \
+        sed -ne 's/  \([a-z0-9/_.]*\).*/\1/p' )" \
+        -- "$cur" ) )
+}
+
+_usine()
+{
+    local cur prev module item action
+
+    COMPREPLY=()
+    _get_comp_words_by_ref cur prev
+
+    set -- "${COMP_WORDS[@]}"
+    shift
+    module=$1
+    item=$2
+    action=$3
+
+    if [[ "$action" ]]; then
+        if [[ "$cur" ]]; then
+            _usine_actions $module $item
+        fi
+    elif [[ "$item" ]]; then
+        if [[ "$cur" ]]; then
+            _usine_items $module
+        else
+            _usine_actions $module $item
+        fi
+    elif [[ "$module" ]]; then
+        if [[ "$cur" ]]; then
+            _usine_modules
+        else
+            _usine_items $module
+        fi
+    else
+        _usine_modules
+    fi
+
+    return 0
+}
+
+complete -F _usine usine.py
+}
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh
