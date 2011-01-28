@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # Copyright (C) 2009-2010 Juan David Ibáñez Palomar <jdavid@itaapy.com>
 #
@@ -53,7 +52,7 @@ class pysrc(module):
     def get_pkgname(self):
         cwd = self.get_path()
         local.chdir(cwd)
-        version = local.run(['%s/python' % bin, 'setup.py', '--version'])
+        version = local.run(['%s/python2' % bin, 'setup.py', '--version'])
         version = version.splitlines()[-1].strip()
         return '%s-%s' % (self.name.split('/')[0], version)
 
@@ -106,7 +105,7 @@ class pysrc(module):
         # itools package: build
         if lfs.exists('%s/setup.conf' % cwd):
             local.run(['%s/ipkg-build.py' % bin])
-        local.run(['%s/python' % bin, 'setup.py', '--quiet', 'sdist'])
+        local.run(['%s/python2' % bin, 'setup.py', '--quiet', 'sdist'])
 
 
     dist_title = u'All of the above'

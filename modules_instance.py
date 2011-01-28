@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # Copyright (C) 2009-2010 Juan David Ibáñez Palomar <jdavid@itaapy.com>
 #
