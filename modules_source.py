@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import from the Standard Library
-from sys import prefix
+from sys import prefix, executable
 from os.path import expanduser
 
 # Import from itools
@@ -26,10 +26,6 @@ from itools.fs import lfs
 from config import config
 from hosts import local
 from modules import module, register_module
-
-
-bin = '%s/bin' % prefix
-
 
 
 class pysrc(module):
@@ -52,7 +48,7 @@ class pysrc(module):
     def get_pkgname(self):
         cwd = self.get_path()
         local.chdir(cwd)
-        version = local.run(['%s/python2' % bin, 'setup.py', '--version'])
+        version = local.run([executable, 'setup.py', '--version'])
         version = version.splitlines()[-1].strip()
         return '%s-%s' % (self.name.split('/')[0], version)
 
@@ -104,8 +100,8 @@ class pysrc(module):
         local.chdir(cwd)
         # itools package: build
         if lfs.exists('%s/setup.conf' % cwd):
-            local.run(['%s/ipkg-build.py' % bin])
-        local.run(['%s/python2' % bin, 'setup.py', '--quiet', 'sdist'])
+            local.run(['%s/bin/ipkg-build.py' % prefix])
+        local.run([executable, 'setup.py', '--quiet', 'sdist'])
 
 
     dist_title = u'All of the above'
