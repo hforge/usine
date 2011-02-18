@@ -48,9 +48,7 @@ class pysrc(module):
     def get_pkgname(self):
         cwd = self.get_path()
         local.chdir(cwd)
-        version = local.run([executable, 'setup.py', '--version'])
-        version = version.splitlines()[-1].strip()
-        return '%s-%s' % (self.name.split('/')[0], version)
+        return local.run([executable, 'setup.py', '--fullname']).strip()
 
 
     def get_path(self):
