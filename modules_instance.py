@@ -158,7 +158,7 @@ class pyenv(instance):
             host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
             pkg_path = '/tmp/%s' % pkgname
             # Install
-            host.run('%s setup.py --quiet install' % py_path, pkg_path)
+            host.run('%s setup.py --quiet install --force' % py_path, pkg_path)
             # Clean
             host.run('rm -rf %s' % pkg_path, '/tmp')
 
@@ -168,7 +168,7 @@ class pyenv(instance):
         print ' INSTALL'
         print '**********************************************************'
         path = expanduser(self.location[2])
-        command = ['%s/bin/python' % path, 'setup.py', 'install']
+        command = ['%s/bin/python' % path, 'setup.py', 'install', '--force']
         for name, branch in self.get_packages():
             source = self.get_source(name)
             cwd = source.get_path()
