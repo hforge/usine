@@ -32,8 +32,7 @@ from modules import module, register_module
 
 
 cmd_vhosts = """
-from itools.xapian import Catalog
-from ikaaro.registry import get_register_fields
+from itools.database import Catalog, get_register_fields
 catalog = Catalog('./%s/catalog', get_register_fields(), read_only=True)
 vhosts = list(catalog.get_unique_values('vhosts'))
 vhosts.sort()
