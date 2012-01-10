@@ -58,6 +58,11 @@ class instance(module):
         return user, server, path
 
 
+    @lazy
+    def bin_python(self):
+        return '%s/bin/python' % self.location[2]
+
+
     def get_host(self):
         user, server, path = self.location
         if server == 'localhost':
@@ -149,8 +154,7 @@ class pyenv(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        path = self.location[2]
-        command = '%s/bin/python setup.py --quiet install --force' % path
+        command = '%s setup.py --quiet install --force' % self.bin_python
         prefix = self.options.get('prefix')
         if prefix:
             command += ' --prefix=%s' % prefix
@@ -170,8 +174,8 @@ class pyenv(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        path = expanduser(self.location[2])
-        command = ['%s/bin/python' % path, 'setup.py', 'install', '--force']
+        bin_python = expanduser(self.bin_python)
+        command = [bin_python, 'setup.py', 'install', '--force']
         for name, branch in self.get_packages():
             source = self.get_source(name)
             cwd = source.get_path()
@@ -241,9 +245,21 @@ class ikaaro(instance):
     class_actions = freeze(['start', 'stop', 'restart', 'reindex', 'vhosts'])
 
 
-    def get_host(self):
+    @lazy
+    def pyenv(self):
         pyenv = self.options['pyenv']
-        pyenv = config.get_section('pyenv', pyenv)
+        return config.get_section('pyenv', pyenv)
+
+
+    @lazy
+    def bin_icms(self):
+        pyenv = self.pyenv
+        prefix = pyenv.options.get('prefix') or pyenv.location[2]
+        return '%s/bin' % prefix
+
+
+    def get_host(self):
+        pyenv = self.pyenv
         host = pyenv.get_host()
         cwd = pyenv.location[2]
         host.chdir(cwd)
@@ -253,21 +269,22 @@ class ikaaro(instance):
     def stop(self):
         path = self.options['path']
         host = self.get_host()
-        host.run('./bin/icms-stop.py %s' % path)
-        host.run('./bin/icms-stop.py --force %s' % path)
+        host.run('%s/icms-stop.py %s' % (self.bin_icms, path))
+        host.run('%s/icms-stop.py --force %s' % (self.bin_icms, path))
 
 
     def start(self, readonly=False):
-        cmd = ' '.join([
-            './bin/icms-start.py',
-            '-r' if readonly else '',
-            '-d', self.options['path']])
+        path = self.options['path']
+        cmd = '%s/icms-start.py -d %s' % (self.bin_icms, path)
+        if readonly:
+            cmd = cmd + ' -r'
         host = self.get_host()
         host.run(cmd)
 
 
     def update_catalog(self):
-        cmd = './bin/icms-update-catalog.py -y %s' % self.options['path']
+        path = self.options['path']
+        cmd = '%s/icms-update-catalog.py -y %s' % (self.bin_icms, path)
         host = self.get_host()
         host.run(cmd)
 
