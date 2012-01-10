@@ -149,7 +149,11 @@ class pyenv(instance):
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        py_path = '%s/bin/python' % self.location[2]
+        path = self.location[2]
+        command = '%s/bin/python setup.py --quiet install --force' % path
+        prefix = self.options.get('prefix')
+        if prefix:
+            command += ' --prefix=%s' % prefix
         for name, branch in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
@@ -157,7 +161,7 @@ class pyenv(instance):
             host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
             pkg_path = '/tmp/%s' % pkgname
             # Install
-            host.run('%s setup.py --quiet install --force' % py_path, pkg_path)
+            host.run(command, pkg_path)
             # Clean
             host.run('rm -rf %s' % pkg_path, '/tmp')
 
