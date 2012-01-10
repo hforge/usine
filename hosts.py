@@ -17,6 +17,7 @@
 # Import from the Standard Library
 from contextlib import closing
 from os.path import basename, expanduser
+import socket
 from stat import S_ISDIR
 from sys import stdout
 
@@ -68,6 +69,19 @@ class LocalHost(object):
 
 
 
+def read_from_channel(recv):
+    buffer = []
+    try:
+        data = recv(1024)
+        while data:
+            buffer.append(data)
+            data = recv(1024)
+    except socket.timeout:
+        pass
+
+    return ''.join(buffer)
+
+
 class RemoteHost(object):
 
     def __init__(self, host, user):
@@ -109,26 +123,29 @@ class RemoteHost(object):
         # Print
         if quiet is False:
             print '%s@%s %s $ %s' % (self.user, self.host, self.cwd, command)
-        command = 'cd %s && %s' % (self.cwd, command)
+        command = 'cd %s\n%s\necho EOF\n' % (self.cwd, command)
 
         # Call
         channel = self.transport.open_channel('session')
+        channel.invoke_shell()
+        channel.settimeout(0.0)
         try:
-            channel.exec_command(command)
-            status = channel.recv_exit_status()
-            if status:
-                print 'ERROR'
-                data = channel.recv_stderr(512)
-                while data:
+            channel.send(command)
+            while True:
+                data = read_from_channel(channel.recv)
+                # Check EOF
+                if not data or data.endswith('EOF\n'):
+                    data = data[:-4]
                     stdout.write(data)
                     stdout.flush()
-                    data = channel.recv_stderr(512)
-            else:
-                data = channel.recv(512)
-                while data:
-                    stdout.write(data)
-                    stdout.flush()
-                    data = channel.recv(512)
+                    break
+                stdout.write(data)
+                stdout.flush()
+            # Error
+            data = read_from_channel(channel.recv_stderr)
+            if data:
+                stdout.write(data)
+                stdout.flush()
         finally:
             channel.close()
 
