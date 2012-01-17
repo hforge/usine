@@ -39,6 +39,9 @@ access a remote host (through paramiko).  The common API is:
 
 
 
+###########################################################################
+# Local host
+###########################################################################
 class LocalHost(object):
 
     cwd = None
@@ -69,6 +72,9 @@ class LocalHost(object):
 
 
 
+###########################################################################
+# Remote host
+###########################################################################
 def read_from_channel(recv):
     buffer = []
     try:
@@ -82,13 +88,62 @@ def read_from_channel(recv):
     return ''.join(buffer)
 
 
+
+def run_with_shell(channel, cwd, command):
+    command = 'cd %s\n%s\necho EOF\n' % (cwd, command)
+
+    # Call
+    channel.invoke_shell()
+    channel.settimeout(0.0)
+    channel.send(command)
+    while True:
+        data = read_from_channel(channel.recv)
+        # Check EOF
+        if not data or data.endswith('EOF\n'):
+            data = data[:-4]
+            stdout.write(data)
+            stdout.flush()
+            break
+        stdout.write(data)
+        stdout.flush()
+    # Error
+    data = read_from_channel(channel.recv_stderr)
+    if data:
+        stdout.write(data)
+        stdout.flush()
+
+
+
+def run_without_shell(channel, cwd, command):
+    command = 'cd %s && %s' % (cwd, command)
+
+    # Call
+    channel.exec_command(command)
+    status = channel.recv_exit_status()
+    if status:
+        print 'ERROR'
+        data = channel.recv_stderr(512)
+        while data:
+            stdout.write(data)
+            stdout.flush()
+            data = channel.recv_stderr(512)
+    else:
+        data = channel.recv(512)
+        while data:
+            stdout.write(data)
+            stdout.flush()
+            data = channel.recv(512)
+
+
+
 class RemoteHost(object):
 
-    def __init__(self, host, user):
+    def __init__(self, host, user, shell):
         host, port = host.split(':')
         self.host = host
         self.port = int(port)
         self.user = user
+        self.shell = shell # True or False
         # Connection
         self.ssh = None
 
@@ -123,29 +178,13 @@ class RemoteHost(object):
         # Print
         if quiet is False:
             print '%s@%s %s $ %s' % (self.user, self.host, self.cwd, command)
-        command = 'cd %s\n%s\necho EOF\n' % (self.cwd, command)
 
-        # Call
         channel = self.transport.open_channel('session')
-        channel.invoke_shell()
-        channel.settimeout(0.0)
         try:
-            channel.send(command)
-            while True:
-                data = read_from_channel(channel.recv)
-                # Check EOF
-                if not data or data.endswith('EOF\n'):
-                    data = data[:-4]
-                    stdout.write(data)
-                    stdout.flush()
-                    break
-                stdout.write(data)
-                stdout.flush()
-            # Error
-            data = read_from_channel(channel.recv_stderr)
-            if data:
-                stdout.write(data)
-                stdout.flush()
+            if self.shell:
+                run_with_shell(channel, self.cwd, command)
+            else:
+                run_without_shell(channel, self.cwd, command)
         finally:
             channel.close()
 
@@ -174,11 +213,11 @@ local = LocalHost()
 # Cache
 remote_hosts = {}
 
-def get_remote_host(host, user):
-    key = (host, user)
+def get_remote_host(host, user, shell):
+    key = (host, user, shell)
     remote_host = remote_hosts.get(key)
     if not remote_host:
-        remote_host = RemoteHost(host, user)
+        remote_host = RemoteHost(host, user, shell)
         remote_hosts[key] = remote_host
 
     return remote_host

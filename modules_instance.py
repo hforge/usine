@@ -74,7 +74,8 @@ class instance(module):
 
         server = config.get_section('server', server)
         host = server.options['host']
-        return get_remote_host(host, user)
+        shell = bool(int(self.options.get('shell', '0')))
+        return get_remote_host(host, user, shell)
 
 
     def get_source(self, name):
