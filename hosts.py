@@ -16,13 +16,14 @@
 
 # Import from the Standard Library
 from contextlib import closing
+from getpass import getpass
 from os.path import basename, expanduser
 import socket
 from stat import S_ISDIR
 from sys import stdout
 
 # Import from paramiko
-from paramiko import AutoAddPolicy, SSHClient
+from paramiko import AutoAddPolicy, SSHClient, PasswordRequiredException
 
 # Import from itools
 from itools.core import get_pipe
@@ -159,7 +160,11 @@ class RemoteHost(object):
             ssh = SSHClient()
             ssh.load_system_host_keys()
             ssh.set_missing_host_key_policy(AutoAddPolicy())
-            ssh.connect(self.host, self.port, self.user)
+            try:
+                ssh.connect(self.host, self.port, self.user)
+            except PasswordRequiredException:
+                password = getpass('Enter passphrase for key: ')
+                ssh.connect(self.host, self.port, self.user, password)
             self.ssh = ssh
         return self.ssh.get_transport()
 
