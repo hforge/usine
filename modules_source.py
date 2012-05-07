@@ -19,7 +19,6 @@ from sys import prefix, executable
 from os.path import expanduser
 
 # Import from itools
-from itools import pkg
 from itools.fs import lfs
 
 # Import from usine
@@ -98,7 +97,10 @@ class pysrc(module):
         local.chdir(cwd)
         # itools package: build
         if lfs.exists('%s/setup.conf' % cwd):
-            local.run(['%s/bin/ipkg-build.py' % prefix])
+            build = '%s/bin/ipkg-build.py' % prefix
+            if not lfs.exists(build):
+                build = 'ipkg-build.py'
+            local.run([build])
         local.run([executable, 'setup.py', '--quiet', 'sdist'])
 
 
