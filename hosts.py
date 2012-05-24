@@ -58,6 +58,7 @@ class LocalHost(object):
             self.chdir(cwd)
         # Format command
         if type(command) is str:
+            command = expanduser(command)
             command_str = command
             command = command.split()
         else:
