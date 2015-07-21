@@ -277,6 +277,7 @@ class ikaaro(instance):
     def start(self, readonly=False):
         path = self.options['path']
         cmd = '%s/icms-start.py -d %s' % (self.bin_icms, path)
+        readonly = readonly or self.options.get('readonly', False)
         if readonly:
             cmd = cmd + ' -r'
         host = self.get_host()
