@@ -44,7 +44,7 @@ if __name__ == '__main__':
     usage = 'usine.py [options] <module> <item> <action>...'
     parser = OptionParser(usage, description='foo', formatter=HelpFormatter())
     parser.add_option('--offline', action='store_true',
-        help='In this mode the source code will not be syncrhonized from the '
+        help='In this mode the source code will not be synchronized from the '
              'mirror, and remote actions will be disabled.')
     parser.add_option('-b', '--branch', default='master',
         help='The branch to use (default: master), this option only applies '
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         print
         for action in item.get_actions():
             title = getattr(module, '%s_title' % action)
-            action = action + " " * (9 - len(action))
+            action = action + " " * (15 - len(action))
             print '  %s: %s' % (action, title)
         exit(0)
 
@@ -124,4 +124,3 @@ if __name__ == '__main__':
     # Close connections
     for host in remote_hosts.values():
         host.close()
-

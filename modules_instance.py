@@ -94,9 +94,10 @@ class pyenv(instance):
 
     def get_actions(self):
         if self.location[1] == 'localhost':
-            return ['build', 'install', 'restart', 'deploy']
-        return ['build', 'upload', 'install', 'restart', 'deploy', 'test',
-                'vhosts']
+            return ['build', 'install', 'restart', 'deploy', 'deploy_reindex',
+                    'reindex']
+        return ['build', 'upload', 'install', 'restart', 'deploy',
+                'deploy_reindex', 'test', 'vhosts', 'reindex']
 
 
     def get_action(self, name):
@@ -196,6 +197,20 @@ class pyenv(instance):
                 ikaaro.start()
 
 
+    reindex_title = u'Reindex the ikaaro instances that use this environment'
+    def action_reindex(self):
+        """Reindex every ikaaro instance.
+        """
+        print '**********************************************************'
+        print ' REINDEX'
+        print '**********************************************************'
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                ikaaro.stop()
+                ikaaro.update_catalog()
+                ikaaro.start()
+
+
     deploy_title = u'All of the above'
     def action_deploy(self):
         """Deploy (build, upload, install, restart) the required Python
@@ -203,6 +218,21 @@ class pyenv(instance):
         instances.
         """
         actions = ['build', 'upload', 'install', 'restart']
+        for name in actions:
+            action = self.get_action(name)
+            if action:
+                action()
+
+
+    deploy_reindex_title = (
+        u'Build, upload, install, reindex and start the ikaaro instances')
+    def action_deploy_reindex(self):
+        """
+        Build, upload, install the required Python packages
+        in the remote virtual environment and stop, reindex and start all the
+        ikaaro instances.
+        """
+        actions = ['build', 'upload', 'install', 'stop', 'reindex', 'start']
         for name in actions:
             action = self.get_action(name)
             if action:
@@ -286,7 +316,7 @@ class ikaaro(instance):
 
     def update_catalog(self):
         path = self.options['path']
-        cmd = '%s/icms-update-catalog.py -y %s' % (self.bin_icms, path)
+        cmd = '{0}/icms-update-catalog.py -y {1} --quiet'.format(self.bin_icms, path)
         host = self.get_host()
         host.run(cmd)
 
@@ -329,9 +359,7 @@ class ikaaro(instance):
         print ' REINDEX'
         print '**********************************************************'
         self.stop()
-        self.start(readonly=True)
         self.update_catalog()
-        self.stop()
         self.start()
 
 
