@@ -70,11 +70,17 @@ if __name__ == '__main__':
                 print u'  %s: %s' % (name, module.class_title)
         exit(0)
 
+
     # Get the module
     module_name, args = args[0], args[1:]
     module = modules.get(module_name)
     if not module or not module.class_title:
         print 'Error: unexpected "%s" module' % module_name
+        exit(1)
+
+    # Update configuration
+    if module_name == 'config':
+        config.action_update()
         exit(1)
 
     # Case 1: Just the module, print help

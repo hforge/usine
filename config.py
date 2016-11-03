@@ -19,19 +19,23 @@ from ConfigParser import RawConfigParser
 from os.path import expanduser
 
 # Import from itools
+from itools.core import freeze
 from itools.fs import lfs
 
 # Import from usine
-from modules import modules
+from hosts import local
+from modules import modules, register_module
 
 
 
 class configuration(object):
 
+    class_title = u'Manage configuration'
+    class_actions = freeze([''])
+
     def __init__(self):
         self.by_type = {}            # type: [<data>, ..]
         self.by_type_and_name = {}   # (type, name): <data>
-
 
     def load(self):
         path = expanduser('~/.usine')
@@ -70,6 +74,22 @@ class configuration(object):
             self.by_type[type].sort(key=lambda x: x.name)
 
 
+    update_title = u'Update usine configuration'
+    def action_update(self):
+        """
+        If config folder is a GIT repository, rebase it
+        """
+        print '**********************************************************'
+        print ' UPDATE USINE CONFIGURATION'
+        print '**********************************************************'
+        path = expanduser('~/.usine')
+        for x in lfs.get_names(path):
+            folder = '{}/{}'.format(path, x)
+            if lfs.exists('{}/.git'.format(folder)):
+                local.run(['git', 'fetch', 'origin'], cwd=folder)
+                local.run(['git', 'reset', '--hard', 'origin/master'], cwd=folder)
+
+
     def get_sections_by_type(self, type):
         return self.by_type.get(type, [])
 
@@ -81,3 +101,4 @@ class configuration(object):
 
 # singleton
 config = configuration()
+register_module('config', configuration)
