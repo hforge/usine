@@ -95,12 +95,6 @@ class pysrc(module):
     def action_build(self):
         cwd = self.get_path()
         local.chdir(cwd)
-        # itools package: build
-        if lfs.exists('%s/setup.conf' % cwd):
-            build = '%s/bin/ipkg-build.py' % prefix
-            if not lfs.exists(build):
-                build = 'ipkg-build.py'
-            local.run([build])
         local.run([executable, 'setup.py', '--quiet', 'sdist'])
 
 
