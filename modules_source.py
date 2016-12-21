@@ -62,16 +62,25 @@ class pysrc(module):
         return '%s%s.git' % (mirror, self.name)
 
 
-    def _checkout(self, branch):
+    def _checkout(self, version):
         cwd = self.get_path()
         local.chdir(cwd)
-        try:
-            local.run(['git', 'checkout', branch])
-        except EnvironmentError:
-            local.run(['git', 'checkout', '-b', branch, 'origin/%s' % branch])
+        on_tag = version.startswith('@')
+        if not on_tag:
+            # Checkout branch
+            try:
+                local.run(['git', 'checkout', version])
+            except EnvironmentError:
+                local.run(['git', 'checkout', '-b', version, 'origin/%s' % version])
+            else:
+                local.run(['git', 'reset', '--hard', 'origin/%s' % version])
         else:
-            local.run(['git', 'reset', '--hard', 'origin/%s' % branch])
+            # Checkout tag
+            tag = version[1:]
+            local.run(['git', 'fetch', '--tags'])
+            local.run(['git', 'checkout', tag])
         local.run('git clean -fxdq')
+
 
 
     sync_title = u'[private] Synchronize the source from the mirror'
@@ -88,7 +97,7 @@ class pysrc(module):
 
     checkout_title = u'[private] Checkout the given branch (default: master)'
     def action_checkout(self):
-        self._checkout(config.options.branch)
+        self._checkout(config.options.version)
 
 
     build_title = u'[private] Build'

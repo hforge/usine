@@ -125,8 +125,8 @@ class pyenv(instance):
         print '**********************************************************'
         print ' BUILD'
         print '**********************************************************'
-        for name, branch in self.get_packages():
-            config.options.branch = branch
+        for name, version in self.get_packages():
+            config.options.version = version
             source = self.get_source(name)
             source.action_dist()
 
@@ -139,7 +139,7 @@ class pyenv(instance):
         print '**********************************************************'
         print ' UPLOAD'
         print '**********************************************************'
-        for name, branch in self.get_packages():
+        for name, version in self.get_packages():
             source = self.get_source(name)
             # Upload
             pkgname = source.get_pkgname()
@@ -160,7 +160,7 @@ class pyenv(instance):
         prefix = self.options.get('prefix')
         if prefix:
             command += ' --prefix=%s' % prefix
-        for name, branch in self.get_packages():
+        for name, version in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
             # Untar
@@ -178,7 +178,7 @@ class pyenv(instance):
         print '**********************************************************'
         bin_python = expanduser(self.bin_python)
         command = [bin_python, 'setup.py', 'install', '--force']
-        for name, branch in self.get_packages():
+        for name, version in self.get_packages():
             source = self.get_source(name)
             cwd = source.get_path()
             local.run(command, cwd=cwd)
