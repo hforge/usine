@@ -63,6 +63,11 @@ class instance(module):
         return '%s/bin/python' % self.location[2]
 
 
+    @lazy
+    def bin_pip(self):
+        return '%s/bin/pip' % self.location[2]
+
+
     def get_host(self):
         user, server, path = self.location
         if server == 'localhost':
@@ -149,25 +154,39 @@ class pyenv(instance):
 
     install_title = u'Install the source code into the Python environment'
     def action_install(self):
-        """Installs every required package into the remote virtual
+        """Installs every required package (and dependencies) into the remote virtual
         environment.
         """
         host = self.get_host()
         print '**********************************************************'
         print ' INSTALL'
         print '**********************************************************'
-        command = '%s setup.py --quiet install --force' % self.bin_python
+        install_command = '%s setup.py --quiet install --force' % self.bin_python
+        pip_install_command = '%s install -r requirements.txt' % self.bin_pip
         prefix = self.options.get('prefix')
         if prefix:
-            command += ' --prefix=%s' % prefix
+            pip_install_command += ' --prefix=%s' % prefix
         for name, version in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
             # Untar
             host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
             pkg_path = '/tmp/%s' % pkgname
+            # Install dependencies with pip
+            try:
+                print '********************************'
+                print ' INSTALL DEPENDENCIES for %s' % name
+                print '********************************'
+                host.run(pip_install_command, pkg_path)
+            except EnvironmentError:
+                # In case there is no requirements.txt
+                print ' ==> No file requirements.txt found, ignore'
+                pass
             # Install
-            host.run(command, pkg_path)
+            print '********************************'
+            print ' INSTALL PACKAGE %s ' % name
+            print '********************************'
+            host.run(install_command, pkg_path)
             # Clean
             host.run('rm -rf %s' % pkg_path, '/tmp')
 
