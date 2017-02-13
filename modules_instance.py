@@ -162,7 +162,7 @@ class pyenv(instance):
         print ' INSTALL'
         print '**********************************************************'
         install_command = '%s setup.py --quiet install --force' % self.bin_python
-        pip_install_command = '%s install -r requirements.txt' % self.bin_pip
+        pip_install_command = '%s install -r requirements.txt --upgrade' % self.bin_pip
         prefix = self.options.get('prefix')
         if prefix:
             pip_install_command += ' --prefix=%s' % prefix
