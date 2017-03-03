@@ -25,6 +25,11 @@ from sys import stdout
 # Import from paramiko
 from paramiko import AutoAddPolicy, SSHClient, PasswordRequiredException
 
+# Add log
+import paramiko
+paramiko.util.log_to_file("/tmp/usine.log")
+
+
 # Import from itools
 from itools.core import get_pipe
 
