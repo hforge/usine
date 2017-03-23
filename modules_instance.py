@@ -100,9 +100,10 @@ class pyenv(instance):
     def get_actions(self):
         if self.location[1] == 'localhost':
             return ['build', 'install', 'restart', 'deploy', 'deploy_reindex',
-                    'reindex']
+                    'update', 'reindex', 'start', 'stop']
         return ['build', 'upload', 'install', 'restart', 'deploy',
-                'deploy_reindex', 'test', 'vhosts', 'reindex']
+                'update', 'deploy_reindex',
+                'test', 'vhosts', 'reindex', 'start', 'stop']
 
 
     def get_action(self, name):
@@ -258,6 +259,51 @@ class pyenv(instance):
                 action()
 
 
+    update_title = (u'Launch update methods on the ikaaro '
+                    u'instances that use this environment')
+    def action_update(self):
+        """
+        Launch update methods on every ikaaro instance.
+        """
+        print '**********************************************************'
+        print ' UPDATE'
+        print '**********************************************************'
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                try:
+                    ikaaro.update()
+                except EnvironmentError as e:
+                    print '[ERROR] ' + str(e)
+
+
+    start_title = (
+        u'Start the ikaaro instances')
+    def action_start(self):
+        """
+        Start all the ikaaro instances.
+        """
+        print '**********************************************************'
+        print ' START'
+        print '**********************************************************'
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                ikaaro.start()
+
+
+    stop_title = (
+        u'Stop the ikaaro instances')
+    def action_stop(self):
+        """
+        Stop all the ikaaro instances.
+        """
+        print '**********************************************************'
+        print ' STOP'
+        print '**********************************************************'
+        for ikaaro in config.get_sections_by_type('ikaaro'):
+            if ikaaro.options['pyenv'] == self.name:
+                ikaaro.stop()
+
+
     test_title = (
         u'Test if ikaaro instances of this Python environment are alive')
     def action_test(self):
@@ -292,7 +338,8 @@ class pyenv(instance):
 class ikaaro(instance):
 
     class_title = u'Manage Ikaaro instances'
-    class_actions = freeze(['start', 'stop', 'restart', 'reindex', 'vhosts'])
+    class_actions = freeze([
+        'start', 'stop', 'restart', 'reindex', 'update', 'vhosts'])
 
 
     @lazy
@@ -340,6 +387,13 @@ class ikaaro(instance):
         host.run(cmd)
 
 
+    def update(self):
+        path = self.options['path']
+        cmd = '{0}/icms-update.py {1}'.format(self.bin_icms, path)
+        host = self.get_host()
+        host.run(cmd)
+
+
     def vhosts(self):
         path = self.options['path']
         host = self.get_host()
@@ -379,6 +433,16 @@ class ikaaro(instance):
         print '**********************************************************'
         self.stop()
         self.update_catalog()
+        self.start()
+
+
+    update_title = u'Launch update methods of an ikaaro instance'
+    def action_update(self):
+        print '**********************************************************'
+        print ' UPDATE'
+        print '**********************************************************'
+        self.stop()
+        self.update()
         self.start()
 
 
