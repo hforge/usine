@@ -98,21 +98,15 @@ class pyenv(instance):
 
 
     def get_actions(self):
+        global_actions = ['build', 'restart',
+                          'deploy', 'update', 'deploy_reindex',
+                          'update', 'reindex', 'start', 'stop',
+                          ]
         if self.location[1] == 'localhost':
-            return ['build', 'install', 'restart', 'deploy', 'deploy_reindex',
-                    'update', 'reindex', 'start', 'stop']
-        return ['build', 'upload', 'install', 'restart', 'deploy',
-                'update', 'deploy_reindex',
-                'test', 'vhosts', 'reindex', 'start', 'stop']
-
-
-    def get_action(self, name):
-        if self.location[1] == 'localhost':
-            if name == 'install':
-                return self.action_install_local
-            elif name == 'upload':
-                return None
-        return super(pyenv, self).get_action(name)
+            # Add specific install local
+            return global_actions + ['install_local']
+        # Add specific remote actions
+        return global_actions + ['install', 'upload', 'test', 'vhosts']
 
 
     def get_packages(self):
@@ -167,6 +161,7 @@ class pyenv(instance):
         prefix = self.options.get('prefix')
         if prefix:
             pip_install_command += ' --prefix=%s' % prefix
+            install_command += ' --prefix=%s' % prefix
         for name, version in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
@@ -194,14 +189,29 @@ class pyenv(instance):
 
     def action_install_local(self):
         print '**********************************************************'
-        print ' INSTALL'
+        print ' INSTALL (LOCAL)'
         print '**********************************************************'
         bin_python = expanduser(self.bin_python)
-        command = [bin_python, 'setup.py', 'install', '--force']
+        install_command = '%s setup.py --quiet install --force' % bin_python
+        pip_install_command = '%s install -r requirements.txt --upgrade' % self.bin_pip
         for name, version in self.get_packages():
             source = self.get_source(name)
             cwd = source.get_path()
-            local.run(command, cwd=cwd)
+            # Install dependencies with pip
+            try:
+                print '********************************'
+                print ' INSTALL DEPENDENCIES for %s' % name
+                print '********************************'
+                local.run(pip_install_command, cwd=cwd)
+            except EnvironmentError:
+                # In case there is no requirements.txt
+                print ' ==> No file requirements.txt found, ignore'
+                pass
+            # Install
+            print '********************************'
+            print ' INSTALL PACKAGE %s ' % name
+            print '********************************'
+            local.run(install_command, cwd=cwd)
 
 
     restart_title = u'Restart the ikaaro instances that use this environment'
