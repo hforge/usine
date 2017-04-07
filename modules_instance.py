@@ -167,6 +167,7 @@ class pyenv(instance):
         prefix = self.options.get('prefix')
         if prefix:
             pip_install_command += ' --prefix=%s' % prefix
+            install_command += ' --prefix=%s' % prefix
         for name, version in self.get_packages():
             source = self.get_source(name)
             pkgname = source.get_pkgname()
