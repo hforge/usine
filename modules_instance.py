@@ -119,6 +119,8 @@ class pyenv(instance):
             # Action upload is not available on localhost
             if name == 'upload':
                 return None
+            elif name == 'install':
+                return self.action_install_local
         return super(pyenv, self).get_action(name)
 
 
