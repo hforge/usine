@@ -114,6 +114,14 @@ class pyenv(instance):
         return [ x.split(':') for x in packages ]
 
 
+    def get_action(self, name):
+        if self.location[1] == 'localhost':
+            # Action upload is not available on localhost
+            if name == 'upload':
+                return None
+        return super(pyenv, self).get_action(name)
+
+
     build_title = u'Build the source code this Python environment requires'
     def action_build(self):
         """Make a source distribution for every required Python package.
