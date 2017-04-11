@@ -85,14 +85,16 @@ class pysrc(module):
 
     sync_title = u'[private] Synchronize the source from the mirror'
     def action_sync(self):
-        # Case 1: Fetch
         folder = self.get_path()
         if lfs.exists(folder):
+            # Case 1: Fetch
             local.run('git fetch origin', cwd=folder)
-            return
+        else:
+            # Case 2: Clone
+            local.run(['git', 'clone', self.get_url(), folder])
+        # Update submodules
+        local.run(['git', 'submodule', 'update', '--init', '--recursive'])
 
-        # Case 2: Clone
-        local.run(['git', 'clone', self.get_url(), folder])
 
 
     checkout_title = u'[private] Checkout the given branch (default: master)'
