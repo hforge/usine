@@ -16,6 +16,7 @@
 
 # Import from the Standard Library
 from os.path import expanduser
+from time import sleep
 
 # Import from pygobject
 from glib import GError
@@ -334,12 +335,15 @@ class pyenv(instance):
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 uri = ikaaro.options['uri']
-                try:
-                    vfs.open('%s/;_ctrl' % uri)
-                except GError:
-                    print '[ERROR] ', uri
-                else:
-                    print '[OK]', uri
+                for i in range(1, 6):
+                    try:
+                        vfs.open('%s/;_ctrl' % uri)
+                    except GError:
+                        print '[ERROR %s/5] ' % i, uri
+                        sleep(0.5)
+                    else:
+                        print '[OK]', uri
+                        break
 
 
     vhosts_title = (
