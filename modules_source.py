@@ -25,6 +25,7 @@ from itools.fs import lfs
 from config import config
 from hosts import local
 from modules import module, register_module
+from utils import logWrapper
 
 
 class pysrc(module):
@@ -84,6 +85,7 @@ class pysrc(module):
 
 
     sync_title = u'[private] Synchronize the source from the mirror'
+    @logWrapper
     def action_sync(self):
         folder = self.get_path()
         if lfs.exists(folder):
@@ -98,11 +100,13 @@ class pysrc(module):
 
 
     checkout_title = u'[private] Checkout the given branch (default: master)'
+    @logWrapper
     def action_checkout(self):
         self._checkout(config.options.version)
 
 
     build_title = u'[private] Build'
+    @logWrapper
     def action_build(self):
         cwd = self.get_path()
         local.chdir(cwd)
@@ -110,6 +114,7 @@ class pysrc(module):
 
 
     dist_title = u'All of the above'
+    @logWrapper
     def action_dist(self):
         actions = ['sync', 'checkout', 'build']
         for name in actions:

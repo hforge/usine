@@ -17,10 +17,15 @@
 
 # Import from the Standard Library
 from optparse import OptionParser, IndentedHelpFormatter
+from os.path import expanduser
 from sys import exit
+
+# Import from itools
+from itools.log import register_logger, log_info
 
 # Import from usine
 from libusine import config, modules, remote_hosts
+from libusine.utils import UsineLogger
 
 
 
@@ -51,6 +56,12 @@ if __name__ == '__main__':
              ' to some actions.')
     options, args = parser.parse_args()
 
+
+    # Init logger
+    log_file_path = expanduser('~/.usine/usine.log')
+    logger = UsineLogger(log_file_path)
+    register_logger(logger, None)
+
     # Configuration
     error = config.load()
     if error:
@@ -70,6 +81,7 @@ if __name__ == '__main__':
                 print u'  %s: %s' % (name, module.class_title)
         exit(0)
 
+    log_info('> Command : ' + ' '.join(args))
 
     # Get the module
     module_name, args = args[0], args[1:]

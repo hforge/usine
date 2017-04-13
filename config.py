@@ -20,11 +20,13 @@ from os.path import expanduser
 
 # Import from itools
 from itools.core import freeze
+from itools.log import log_info, log_fatal
 from itools.fs import lfs
 
 # Import from usine
 from hosts import local
 from modules import modules, register_module
+from libusine.utils import logWrapper
 
 
 
@@ -40,19 +42,19 @@ class configuration(object):
     def load(self):
         path = expanduser('~/.usine')
         if lfs.is_file(path):
-            return 'ERROR: %s is a file, remove it first' % path
+            log_fatal('ERROR: %s is a file, remove it first' % path)
 
         # Make the user configuration file if needed
         if not lfs.exists(path):
-            print 'Making the configuration folder:', path
+            log_info('Making the configuration folder: {}'.format(path))
             lfs.make_folder(path)
-            return 'Now add the INI files within the folder'
+            log_fatal('Now add the INI files within the folder')
 
         # Read the user configuration file
-        ini  = [ '%s/%s' % (path, x)
-                 for x in lfs.get_names(path) if x[-4:] == '.ini' ]
+        ini = [ '%s/%s' % (path, x)
+                for x in lfs.get_names(path) if x[-4:] == '.ini' ]
         if len(ini) == 0:
-            return 'ERROR: zero INI files found in %s/' % path
+            log_fatal('ERROR: zero INI files found in {}/'.format(path))
 
         # Read the ini file
         cfg = RawConfigParser()
@@ -75,13 +77,11 @@ class configuration(object):
 
 
     update_title = u'Update usine configuration'
+    @logWrapper
     def action_update(self):
         """
         If config folder is a GIT repository, rebase it
         """
-        print '**********************************************************'
-        print ' UPDATE USINE CONFIGURATION'
-        print '**********************************************************'
         path = expanduser('~/.usine')
         for x in lfs.get_names(path):
             folder = '{}/{}'.format(path, x)

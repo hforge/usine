@@ -27,11 +27,11 @@ from paramiko import AutoAddPolicy, SSHClient, PasswordRequiredException
 
 # Add log
 import paramiko
-paramiko.util.log_to_file("/tmp/usine.log")
-
+paramiko.util.log_to_file(expanduser("~/.usine/paramiko.log"))
 
 # Import from itools
 from itools.core import get_pipe
+from itools.log import log_info
 
 
 """
@@ -69,7 +69,7 @@ class LocalHost(object):
         else:
             command_str = ' '.join(command)
         # Print
-        print '%s $ %s' % (self.cwd, command_str)
+        log_info('%s $ %s' % (self.cwd, command_str))
         # Call
         return get_pipe(command, cwd=self.cwd)
 
@@ -162,7 +162,7 @@ class RemoteHost(object):
     @property
     def transport(self):
         if self.ssh is None:
-            print 'Connect %s@%s:%s' % (self.user, self.host, self.port)
+            log_info('Connect %s@%s:%s' % (self.user, self.host, self.port))
             ssh = SSHClient()
             ssh.load_system_host_keys()
             ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -188,7 +188,7 @@ class RemoteHost(object):
 
         # Print
         if quiet is False:
-            print '%s@%s %s $ %s' % (self.user, self.host, self.cwd, command)
+            log_info('%s@%s %s $ %s' % (self.user, self.host, self.cwd, command))
 
         channel = self.transport.open_channel('session')
         try:
@@ -211,11 +211,11 @@ class RemoteHost(object):
                 statinfo = ftp.stat(target)
             except IOError:
                 msg = 'PUT %s -> %s@%s:%s'
-                print msg % (source, self.user, self.host, target)
+                log_info(msg % (source, self.user, self.host, target))
                 ftp.put(source, target)
             else:
                 filename = basename(source)
-                print '[INFO] %s already uploaded, skipping.' % filename
+                log_info('[INFO] %s already uploaded, skipping.' % filename)
 
 
 # Singleton
