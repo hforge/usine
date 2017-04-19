@@ -104,6 +104,23 @@ class pyenv(instance):
 
 
     @lazy
+    def bin_python(self):
+        """Override to use expanduser if localhost"""
+        bin_python = '%s/bin/python' % self.location[2]
+        if self.is_local:
+            return expanduser(bin_python)
+        return bin_python
+
+
+    @lazy
+    def bin_pip(self):
+        bin_pip = '%s/bin/pip' % self.location[2]
+        if self.is_local:
+            return expanduser(bin_pip)
+        return bin_pip
+
+
+    @lazy
     def class_actions(self):
         actions = ['start', 'stop', 'restart', 'update', 'reindex',
                    'build', 'install', 'deploy', 'deploy_reindex']
