@@ -169,8 +169,7 @@ class pyenv(instance):
         # Get host
         host = self.get_host()
         # Build commands
-        bin_python = expanduser(self.bin_python)
-        install_command = '%s setup.py --quiet install --force' % bin_python
+        install_command = '%s setup.py --quiet install --force' % self.bin_python
         pip_install_command = '%s install -r requirements.txt --upgrade' % self.bin_pip
         prefix = self.options.get('prefix')
         if prefix:
