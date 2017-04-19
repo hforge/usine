@@ -24,11 +24,13 @@ from glib import GError
 # Import from itools
 from itools.core import freeze, lazy
 from itools.fs import lfs, vfs
+from itools.log import log_info, log_error
 
 # Import from usine
 from config import config
 from hosts import local, get_remote_host
 from modules import module, register_module
+from libusine.utils import logWrapper
 
 
 
@@ -40,7 +42,6 @@ vhosts.sort()
 for vhost in vhosts:
     print vhost
 """
-
 
 class instance(module):
 
@@ -75,7 +76,7 @@ class instance(module):
             return local
 
         if config.options.offline:
-            print 'Error: this action is not available in offline mode'
+            log_error('Error: this action is not available in offline mode')
             exit(1)
 
         server = config.get_section('server', server)
@@ -97,17 +98,19 @@ class pyenv(instance):
 
     class_title = u'Manage Python environments'
 
+    @lazy
+    def is_local(self):
+        return self.location[1] == 'localhost'
 
-    def get_actions(self):
-        global_actions = ['build', 'restart',
-                          'deploy', 'update', 'deploy_reindex',
-                          'update', 'reindex', 'start', 'stop',
-                          ]
-        if self.location[1] == 'localhost':
-            # Add specific install local
-            return global_actions + ['install_local']
-        # Add specific remote actions
-        return global_actions + ['install', 'upload', 'test', 'vhosts']
+
+    @lazy
+    def class_actions(self):
+        actions = ['start', 'stop', 'restart', 'update', 'reindex',
+                   'build', 'install', 'deploy', 'deploy_reindex']
+        if not self.is_local:
+            # Append remote actions
+            actions.extend(['upload', 'test', 'vhosts'])
+        return actions
 
 
     def get_packages(self):
@@ -116,40 +119,39 @@ class pyenv(instance):
 
 
     def get_action(self, name):
-        if self.location[1] == 'localhost':
-            # Action upload is not available on localhost
-            if name == 'upload':
-                return None
-            elif name == 'install':
-                return self.action_install_local
+        if name not in self.get_actions():
+            # Ignore actions not specified in get_actions
+            return None
         return super(pyenv, self).get_action(name)
 
 
     build_title = u'Build the source code this Python environment requires'
+    @logWrapper
     def action_build(self):
         """Make a source distribution for every required Python package.
         """
+        # Get .cache folder
         path = expanduser('~/.usine/cache')
         if not lfs.exists(path):
             lfs.make_folder(path)
 
-        print '**********************************************************'
-        print ' BUILD'
-        print '**********************************************************'
         for name, version in self.get_packages():
             config.options.version = version
             source = self.get_source(name)
-            source.action_dist()
+            if self.is_local:
+                source.action_sync()
+                source.action_checkout()
+            else:
+                # If we build for remote we want to build a dist
+                source.action_dist()
 
 
     upload_title = u'Upload the source code to the remote server'
+    @logWrapper
     def action_upload(self):
         """Upload every required package to the remote host.
         """
         host = self.get_host()
-        print '**********************************************************'
-        print ' UPLOAD'
-        print '**********************************************************'
         for name, version in self.get_packages():
             source = self.get_source(name)
             # Upload
@@ -159,79 +161,62 @@ class pyenv(instance):
 
 
     install_title = u'Install the source code into the Python environment'
+    @logWrapper
     def action_install(self):
         """Installs every required package (and dependencies) into the remote virtual
         environment.
         """
+        # Get host
         host = self.get_host()
-        print '**********************************************************'
-        print ' INSTALL'
-        print '**********************************************************'
-        install_command = '%s setup.py --quiet install --force' % self.bin_python
+        # Build commands
+        bin_python = expanduser(self.bin_python)
+        install_command = '%s setup.py --quiet install --force' % bin_python
         pip_install_command = '%s install -r requirements.txt --upgrade' % self.bin_pip
         prefix = self.options.get('prefix')
         if prefix:
             pip_install_command += ' --prefix=%s' % prefix
             install_command += ' --prefix=%s' % prefix
+
+        # Get package install paths
+        paths = {}
         for name, version in self.get_packages():
             source = self.get_source(name)
-            pkgname = source.get_pkgname()
-            # Untar
-            host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
-            pkg_path = '/tmp/%s' % pkgname
-            # Install dependencies with pip
+            if self.is_local:
+                source_path = source.get_path()
+                paths[name] = source_path
+            else:
+                # If remove we need to untar sources
+                log_info('UNTAR sources for {}'.format(name))
+                source = self.get_source(name)
+                pkgname = source.get_pkgname()
+                host.run('tar xzf %s.tar.gz' % pkgname, '/tmp')
+                source_path = '/tmp/%s' % pkgname
+                paths[name] = source_path
+
+        # Install
+        for name, path in paths.iteritems():
             try:
-                print '********************************'
-                print ' INSTALL DEPENDENCIES for %s' % name
-                print '********************************'
-                host.run(pip_install_command, pkg_path)
+                log_info('INSTALL DEPENDENCIES for {}'.format(name))
+                host.run(pip_install_command, path)
             except EnvironmentError:
                 # In case there is no requirements.txt
-                print ' ==> No file requirements.txt found, ignore'
+                log_info('No file requirements.txt found, ignore')
                 pass
             # Install
-            print '********************************'
-            print ' INSTALL PACKAGE %s ' % name
-            print '********************************'
-            host.run(install_command, pkg_path)
-            # Clean
-            host.run('rm -rf %s' % pkg_path, '/tmp')
+                log_info('INSTALL package {}'.format(name))
+            host.run(install_command, path)
 
-
-    def action_install_local(self):
-        print '**********************************************************'
-        print ' INSTALL (LOCAL)'
-        print '**********************************************************'
-        bin_python = expanduser(self.bin_python)
-        install_command = '%s setup.py --quiet install --force' % bin_python
-        pip_install_command = '%s install -r requirements.txt --upgrade' % self.bin_pip
-        for name, version in self.get_packages():
-            source = self.get_source(name)
-            cwd = source.get_path()
-            # Install dependencies with pip
-            try:
-                print '********************************'
-                print ' INSTALL DEPENDENCIES for %s' % name
-                print '********************************'
-                local.run(pip_install_command, cwd=cwd)
-            except EnvironmentError:
-                # In case there is no requirements.txt
-                print ' ==> No file requirements.txt found, ignore'
-                pass
-            # Install
-            print '********************************'
-            print ' INSTALL PACKAGE %s ' % name
-            print '********************************'
-            local.run(install_command, cwd=cwd)
+            if not self.is_local:
+                # Clean untar sources
+                log_info('DELETE untar sources {}'.format(path))
+                host.run('rm -rf %s' % path, '/tmp')
 
 
     restart_title = u'Restart the ikaaro instances that use this environment'
+    @logWrapper
     def action_restart(self):
         """Restarts every ikaaro instance.
         """
-        print '**********************************************************'
-        print ' RESTART'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 ikaaro.stop()
@@ -239,12 +224,10 @@ class pyenv(instance):
 
 
     reindex_title = u'Reindex the ikaaro instances that use this environment'
+    @logWrapper
     def action_reindex(self):
         """Reindex every ikaaro instance.
         """
-        print '**********************************************************'
-        print ' REINDEX'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 ikaaro.stop()
@@ -253,6 +236,7 @@ class pyenv(instance):
 
 
     deploy_title = u'All of the above'
+    @logWrapper
     def action_deploy(self):
         """Deploy (build, upload, install, restart) the required Python
         packages in the remote virtual environment, and restart all the ikaaro
@@ -267,6 +251,7 @@ class pyenv(instance):
 
     deploy_reindex_title = (
         u'Build, upload, install, reindex and start the ikaaro instances')
+    @logWrapper
     def action_deploy_reindex(self):
         """
         Build, upload, install the required Python packages
@@ -282,30 +267,26 @@ class pyenv(instance):
 
     update_title = (u'Launch update methods on the ikaaro '
                     u'instances that use this environment')
+    @logWrapper
     def action_update(self):
         """
         Launch update methods on every ikaaro instance.
         """
-        print '**********************************************************'
-        print ' UPDATE'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 try:
                     ikaaro.update()
                 except EnvironmentError as e:
-                    print '[ERROR] ' + str(e)
+                    log_error('[ERROR] ' + str(e))
 
 
     start_title = (
         u'Start the ikaaro instances')
+    @logWrapper
     def action_start(self):
         """
         Start all the ikaaro instances.
         """
-        print '**********************************************************'
-        print ' START'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 ikaaro.start()
@@ -313,13 +294,11 @@ class pyenv(instance):
 
     stop_title = (
         u'Stop the ikaaro instances')
+    @logWrapper
     def action_stop(self):
         """
         Stop all the ikaaro instances.
         """
-        print '**********************************************************'
-        print ' STOP'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 ikaaro.stop()
@@ -327,32 +306,28 @@ class pyenv(instance):
 
     test_title = (
         u'Test if ikaaro instances of this Python environment are alive')
+    @logWrapper
     def action_test(self):
         """ Test if ikaaro instances of this Python environment are alive"""
-        print '**********************************************************'
-        print ' TEST'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 uri = ikaaro.options['uri']
                 for i in range(1, 6):
                     try:
-                        vfs.open('%s/;_ctrl' % uri)
+                        vfs.open('{}/;_ctrl'.format(uri))
                     except GError:
-                        print '[ERROR %s/5] ' % i, uri
+                        log_error('[ERROR {}/5] {}'.format(i, uri))
                         sleep(0.5)
                     else:
-                        print '[OK]', uri
+                        log_info('[OK] {}'.format(uri))
                         break
 
 
     vhosts_title = (
         u'List vhosts of all ikaaro instances of this Python environment')
+    @logWrapper
     def action_vhosts(self):
         """List vhosts of all ikaaro instances of this Python environment"""
-        print '**********************************************************'
-        print ' LIST VHOSTS'
-        print '**********************************************************'
         for ikaaro in config.get_sections_by_type('ikaaro'):
             if ikaaro.options['pyenv'] == self.name:
                 ikaaro.vhosts()
@@ -426,55 +401,43 @@ class ikaaro(instance):
 
 
     start_title = u'Start an ikaaro instance'
+    @logWrapper
     def action_start(self):
-        print '**********************************************************'
-        print ' START'
-        print '**********************************************************'
         self.start()
 
 
     stop_title = u'Stop an ikaaro instance'
+    @logWrapper
     def action_stop(self):
-        print '**********************************************************'
-        print ' STOP'
-        print '**********************************************************'
         self.stop()
 
 
     restart_title = u'(Re)Start an ikaaro instance'
+    @logWrapper
     def action_restart(self):
-        print '**********************************************************'
-        print ' RESTART'
-        print '**********************************************************'
         self.stop()
         self.start()
 
 
     reindex_title = u'Update catalog of an ikaaro instance'
+    @logWrapper
     def action_reindex(self):
-        print '**********************************************************'
-        print ' REINDEX'
-        print '**********************************************************'
         self.stop()
         self.update_catalog()
         self.start()
 
 
     update_title = u'Launch update methods of an ikaaro instance'
+    @logWrapper
     def action_update(self):
-        print '**********************************************************'
-        print ' UPDATE'
-        print '**********************************************************'
         self.stop()
         self.update()
         self.start()
 
 
     vhosts_title = u'List vhosts of ikaaro instance'
+    @logWrapper
     def action_vhosts(self):
-        print '**********************************************************'
-        print ' List Vhosts'
-        print '**********************************************************'
         self.vhosts()
 
 
