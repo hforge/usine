@@ -95,7 +95,7 @@ class pysrc(module):
             # Case 2: Clone
             local.run(['git', 'clone', self.get_url(), folder])
         # Update submodules
-        local.run(['git', 'submodule', 'update', '--init', '--recursive'])
+        local.run(['git', 'submodule', 'update', '--init', '--recursive'], cwd=folder)
 
 
 
