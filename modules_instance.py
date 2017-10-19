@@ -18,9 +18,6 @@
 from os.path import expanduser
 from time import sleep
 
-# Import from pygobject
-from glib import GError
-
 # Import from itools
 from itools.core import freeze, lazy
 from itools.fs import lfs, vfs
@@ -331,7 +328,7 @@ class pyenv(instance):
                 for i in range(1, 6):
                     try:
                         vfs.open('{}/;_ctrl'.format(uri))
-                    except GError:
+                    except Exception:
                         log_error('[ERROR {}/5] {}'.format(i, uri))
                         sleep(0.5)
                     else:
