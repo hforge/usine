@@ -94,6 +94,23 @@ class configuration(object):
         return self.by_type.get(type, [])
 
 
+
+    def get_sections_by_package(self, package):
+        sections_packages = []
+        instances = self.by_type.get('ikaaro', [])
+        for instance in instances:
+            pyenv = instance.options['pyenv']
+            section = self.get_section('pyenv', pyenv)
+            if section is None:
+                continue
+            packages = section.options['packages']
+            if package in packages:
+                sections_packages.append(instance)
+        # OK
+        return sections_packages
+
+
+
     def get_section(self, type, name):
         key = (type, name)
         return self.by_type_and_name.get(key)
