@@ -96,7 +96,7 @@ class pysrc(module):
             local.run(['git', 'clone', self.get_url(), folder])
         # Update submodules
         local.run(['git', 'submodule', 'update', '--init', '--recursive'], cwd=folder)
-
+        local.run(['git', 'submodule', 'update', '--remote', '--merge'], cwd=folder)
 
 
     checkout_title = u'[private] Checkout the given branch (default: master)'
