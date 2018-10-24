@@ -20,7 +20,7 @@ from time import sleep
 
 # Import from itools
 from itools.core import freeze, lazy
-from itools.fs import lfs, vfs
+from itools.fs import lfs
 from itools.log import log_info, log_error
 
 # Import from usine
@@ -327,7 +327,7 @@ class pyenv(instance):
                 uri = ikaaro.options['uri']
                 for i in range(1, 6):
                     try:
-                        vfs.open('{}/;_ctrl'.format(uri))
+                        lfs.open('{}/;_ctrl'.format(uri))
                     except Exception:
                         log_error('[ERROR {}/5] {}'.format(i, uri))
                         sleep(0.5)
